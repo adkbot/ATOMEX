@@ -26,11 +26,11 @@
 .div{width:1px;height:20px;background:var(--bdr2);margin:0 3px;}
 .tb-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
 
-/* LAYOUT GRID */
+/* LAYOUT GRID (FLEX-HEIGHT ADAPTIVE) */
 .layout{
   display:grid;
   grid-template-columns:208px 1fr 230px;
-  height:calc(100vh - 44px);
+  flex:1 1 auto;
   overflow:hidden;
 }
 
@@ -43,7 +43,7 @@
   overflow-y:auto;
 }
 .sb-sec{
-  padding:9px 11px;
+  padding:8px 10px;
   border-bottom:1px solid var(--bdr);
 }
 

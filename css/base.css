@@ -40,16 +40,26 @@ html,body{
   font-family:var(--sans);
 }
 
+body {
+  display:flex;
+  flex-direction:column;
+}
+
+/* SLEEK CONTRAST SCROLLBARS */
 ::-webkit-scrollbar{
-  width:4px;
-  height:4px;
+  width:6px;
+  height:6px;
 }
 ::-webkit-scrollbar-track{
-  background:transparent;
+  background:rgba(0,0,0,0.15);
 }
 ::-webkit-scrollbar-thumb{
-  background:var(--bg4);
+  background:var(--bg5);
   border-radius:4px;
+  transition:background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover{
+  background:var(--pur);
 }
 
 @keyframes pulse{
