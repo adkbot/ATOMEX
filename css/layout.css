@@ -12,6 +12,7 @@
   background:var(--bg2);
   border-bottom:1px solid var(--bdr);
   z-index:100;
+  flex:0 0 auto;
 }
 
 .logo{
@@ -30,7 +31,9 @@
 .layout{
   display:grid;
   grid-template-columns:208px 1fr 230px;
+  grid-template-rows:minmax(0,1fr);
   flex:1 1 auto;
+  min-height:0;
   overflow:hidden;
 }
 
@@ -41,6 +44,7 @@
   display:flex;
   flex-direction:column;
   overflow-y:auto;
+  min-height:0;
 }
 .sb-sec{
   padding:8px 10px;
@@ -53,6 +57,7 @@
   flex-direction:column;
   overflow:hidden;
   background:var(--bg);
+  min-height:0;
 }
 .metrics{
   display:grid;
@@ -79,6 +84,7 @@
   display:flex;
   flex-direction:column;
   overflow-y:auto;
+  min-height:0;
 }
 .op-topbar{
   display:flex;
