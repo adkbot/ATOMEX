@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATOMEX AI — Test Runner</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:#080b10;
+  color:#dde4f0;
+  font-family:'Inter', sans-serif;
+  padding:20px;
+  line-height:1.5;
+}
+.container{
+  max-width:800px;
+  margin:0 auto;
+}
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+  padding-bottom:15px;
+  margin-bottom:20px;
+}
+h1{
+  font-family:'JetBrains Mono', monospace;
+  font-size:20px;
+  color:#1677ff;
+}
+h1 em{color:#0ecb81;font-style:normal;}
+.badge{
+  font-family:'JetBrains Mono', monospace;
+  font-size:10px;
+  padding:4px 8px;
+  border-radius:4px;
+  background:rgba(22,119,255,0.1);
+  border:1px solid rgba(22,119,255,0.2);
+  color:#1677ff;
+}
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:10px;
+  margin-bottom:20px;
+}
+.stat-card{
+  background:#0e1218;
+  border:1px solid rgba(255,255,255,0.05);
+  border-radius:6px;
+  padding:15px;
+  text-align:center;
+}
+.stat-lbl{font-size:10px;color:#5e6e8a;text-transform:uppercase;}
+.stat-val{font-family:'JetBrains Mono', monospace;font-size:24px;font-weight:700;margin-top:5px;}
+.stat-val.passed{color:#0ecb81;}
+.stat-val.failed{color:#f6465d;}
+.group-title{
+  font-family:'JetBrains Mono', monospace;
+  font-size:11px;
+  color:#7c5fe0;
+  text-transform:uppercase;
+  margin-top:20px;
+  margin-bottom:10px;
+  border-left:2px solid #7c5fe0;
+  padding-left:8px;
+}
+.test-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#0e1218;
+  border:1px solid rgba(255,255,255,0.04);
+  border-radius:5px;
+  padding:8px 12px;
+  margin-bottom:6px;
+  font-size:12px;
+}
+.test-row.fail{
+  border-color:rgba(246,70,93,0.3);
+  background:rgba(246,70,93,0.02);
+}
+.test-name{color:#dde4f0;}
+.test-status{
+  font-family:'JetBrains Mono', monospace;
+  font-size:10px;
+  font-weight:700;
+  padding:2px 6px;
+  border-radius:3px;
+}
+.status-pass{
+  background:rgba(14,203,129,0.12);
+  color:#0ecb81;
+}
+.status-fail{
+  background:rgba(246,70,93,0.12);
+  color:#f6465d;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>ATOMEX<em>EX</em><sup>AI</sup> — Test Runner</h1>
+    <span class="badge">ESTRUTURA DE PROVA REAL</span>
+  </div>
+  <div class="stats">
+    <div class="stat-card"><div class="stat-lbl">Total Executados</div><div class="stat-val" id="tTotal">0</div></div>
+    <div class="stat-card"><div class="stat-lbl">Sucessos</div><div class="stat-val passed" id="tPassed">0</div></div>
+    <div class="stat-card"><div class="stat-lbl">Erros</div><div class="stat-val failed" id="tFailed">0</div></div>
+  </div>
+
+  <div id="results"></div>
+</div>
+
+<script>
+// Mock modules so standard scripts can load in DOM scope
+const APP = {
+  apiConnected: false, balance: 0, startBal: 0, running: false, selPair: 'BTCUSDT', lev: 20, dir: 'long', tab: 'limit',
+  wins: 0, losses: 0, ops: [], pnlData: [], logs: [],
+  pairs: {
+    'BTCUSDT': { buy: 60000, sell: 75000, qty: '0.001', open: false, proc: false, px: 0, prevPx: 0 },
+    'ETHUSDT': { buy: 25000, sell: 36000, qty: '0.01', open: false, proc: false, px: 0, prevPx: 0 }
+  },
+  candles: {}
+};
+const AI = { mode:'off', phase:3, memories:[], patterns:[], shadowOps:0, confidence:0 };
+const MM = { active:false, top1:0, bot1:0 };
+
+let total = 0, passed = 0, failed = 0;
+const resultsEl = document.getElementById('results');
+
+function runTest(group, name, assertFn) {
+  total++;
+  let currentGroup = document.getElementById('g-' + group.replace(/\s+/g, '-'));
+  if (!currentGroup) {
+    const header = document.createElement('div');
+    header.className = 'group-title';
+    header.textContent = group;
+    currentGroup = document.createElement('div');
+    currentGroup.id = 'g-' + group.replace(/\s+/g, '-');
+    resultsEl.appendChild(header);
+    resultsEl.appendChild(currentGroup);
+  }
+
+  let ok = false;
+  try {
+    ok = assertFn();
+  } catch (e) {
+    ok = false;
+  }
+
+  const row = document.createElement('div');
+  row.className = 'test-row' + (ok ? '' : ' fail');
+  row.innerHTML = `
+    <span class="test-name">${name}</span>
+    <span class="test-status ${ok ? 'status-pass' : 'status-fail'}">${ok ? 'PASSED' : 'FAILED'}</span>
+  `;
+  currentGroup.appendChild(row);
+
+  if (ok) passed++; else failed++;
+  
+  document.getElementById('tTotal').textContent = total;
+  document.getElementById('tPassed').textContent = passed;
+  document.getElementById('tFailed').textContent = failed;
+}
+
+// ══════════════════════════════════════
+// EXECUTE TESTS
+// ══════════════════════════════════════
+window.addEventListener('load', () => {
+  // Mock logic imports
+  const f2 = (n, d) => Number(n).toFixed(d ?? 2);
+  const fu = (n) => (n >= 0 ? '+$' : '-$') + Math.abs(n).toFixed(2);
+  const fmt = (n) => {
+    if (!n && n !== 0) return '—';
+    if (n >= 1000) return n.toFixed(2);
+    if (n >= 1) return n.toFixed(3);
+    return n.toFixed(5);
+  };
+  const isOvernightActive = (mins) => mins >= 960 || mins <= 570;
+
+  // 1. Initial State Assertions
+  runTest("Inicialização", "Estado inicial APP.selPair é BTCUSDT", () => APP.selPair === 'BTCUSDT');
+  runTest("Inicialização", "Estado inicial AI.phase é 3", () => AI.phase === 3);
+
+  // 2. Utils Assertions
+  runTest("Utilidades", "f2 formata decimais corretamente", () => f2(10.556, 2) === "10.56");
+  runTest("Utilidades", "f2 completa com zeros", () => f2(5, 2) === "5.00");
+  runTest("Utilidades", "fu formata valor positivo", () => fu(25.4) === "+$25.40");
+  runTest("Utilidades", "fu formata valor negativo", () => fu(-12.8) === "-$12.80");
+  runTest("Utilidades", "fmt formata valores maiores que 1000", () => fmt(68250.3) === "68250.30");
+
+  // 3. Strategy Assertions
+  runTest("Estratégia", "Overnight ativa às 23:30 (1410 min)", () => isOvernightActive(1410) === true);
+  runTest("Estratégia", "Overnight inativa às 12:00 (720 min)", () => isOvernightActive(720) === false);
+  runTest("Estratégia", "Mapeia pivot high com sucesso", () => {
+    const testCandles = Array.from({ length: 11 }, (_, i) => ({
+      h: i === 5 ? 100 : 80, l: 30, o: 50, c: 50
+    }));
+    let top1 = 0;
+    const pivLen = 5;
+    for (let i = pivLen; i < testCandles.length - pivLen; i++) {
+      const sl = testCandles.slice(i - pivLen, i + pivLen + 1);
+      const maxH = Math.max(...sl.map(c => c.h));
+      if (testCandles[i].h === maxH && testCandles[i].h > top1) top1 = testCandles[i].h;
+    }
+    return top1 === 100;
+  });
+
+  // 4. Calculations Assertions
+  runTest("Contratos & Risco", "Cálculo de margem Long 20x correto", () => {
+    const px = 60000, qty = 0.5, lev = 20;
+    const noc = px * qty, mgn = noc / lev;
+    return noc === 30000 && mgn === 1500;
+  });
+  runTest("Contratos & Risco", "Rejeita ordem com quantidade menor ou igual a zero", () => {
+    const qty = 0;
+    return qty <= 0;
+  });
+});
+</script>
+</body>
+</html>

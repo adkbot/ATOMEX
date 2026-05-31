@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATOMEX AI — Hermes Midnight Madness Pro</title>
+<meta name="description" content="ATOMEX AI Dashboard - Hermes Midnight Madness Pro autonomous trading agent with real-time liquidity sweep reversals, H1 session limits and automated TDD auditing.">
+<!-- ChartJS Dependency -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<!-- Modular CSS Stylesheets -->
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+
+<div id="toastEl" class="toast"></div>
+<div class="shadow-bar" id="shadowBar">⚡ SHADOW MODE — Hermes simulando Midnight Madness em paralelo | Conf: <span id="shadowConf">0%</span></div>
+
+<!-- TOPBAR HEADER -->
+<header class="topbar" id="headerTopbar">
+  <h1 class="logo" id="logoTitle">ATOM<em>EX</em><sup>AI</sup></h1>
+  <div style="display:flex;align-items:center;gap:4px;"><div class="sdot" id="sDot"></div><span class="slbl" id="sLbl">AGUARDANDO</span></div>
+  <div class="div"></div>
+  <div style="display:flex;align-items:center;gap:4px;"><div class="sdot" id="aiDot"></div><span class="slbl" id="aiLbl" style="color:var(--mut2);">IA OFFLINE</span></div>
+  <div class="div"></div>
+  <div style="display:flex;align-items:center;gap:4px;"><div class="sdot" id="apiDot"></div><span class="slbl" id="apiLbl" style="color:var(--mut2);">API DESCONECTADA</span></div>
+  <div class="div"></div>
+  <div style="display:flex;align-items:baseline;gap:8px;">
+    <span class="t-stat" style="font-size:10px;font-weight:600;color:var(--mut);font-family:var(--font);" id="tickerSym">BTCUSDT·PERP</span>
+    <span class="t-px" id="livePx" style="color:var(--mut);">—</span>
+    <span style="font-size:11px;font-family:var(--font);" id="liveChg">—</span>
+    <span class="t-stat">H:<span id="hi24">—</span></span>
+    <span class="t-stat">L:<span id="lo24">—</span></span>
+    <span class="t-stat">Vol:<span id="vol24">—</span></span>
+    <span class="t-stat">FR:<span id="fundRate" style="color:var(--ylw);">—</span></span>
+    <span class="t-stat" id="sessionTag"></span>
+  </div>
+  <div class="tb-right" id="topbarRightControls">
+    <span class="clk" id="clk">--:--:-- EST</span>
+    <span class="mm-badge" id="mmBadge">🌙 MIDNIGHT ON</span>
+    <button class="ai-badge" id="aiBadgeBtn" onclick="openAIPanel()">🧠 HERMES</button>
+    <button class="tbtn tbtn-start" id="btnStart" onclick="toggleBot()">▶ INICIAR</button>
+    <button class="tbtn tbtn-stop" id="btnStop" onclick="toggleBot()" disabled>■ PARAR</button>
+    <button class="gear-btn" id="btnOpenSettings" onclick="openSettings()" title="Configurações & API">⚙</button>
+  </div>
+</header>
+
+<!-- MAIN LAYOUT GRID -->
+<main class="layout" id="mainDashboardLayout">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar" id="sidebarLeftPanel">
+    <section class="sb-sec" id="secFuturesAccount">
+      <div class="sb-ttl">Conta Futuros</div>
+      <div class="acc-card" id="accCardContainer">
+        <div class="acc-disconnected" id="accDisconnected">
+          <span class="acc-icon">🔒</span>
+          <div class="acc-hint">Conecte sua API via ⚙<br>para visualizar saldo real</div>
+        </div>
+        <div class="acc-connected" id="accConnected">
+          <div class="acc-lbl">Saldo Disponível</div>
+          <div class="acc-bal" id="balDisp">—</div>
+          <div class="acc-pnl" id="pnlDisp">P&L: <span>—</span></div>
+          <div class="pbar"><div class="pbar-f" id="pnlBar" style="width:0%;background:var(--up);"></div></div>
+        </div>
+      </div>
+    </section>
+    
+    <section class="sb-sec" id="secHermesAgent">
+      <div class="sb-ttl">Hermes — Super Agente IA</div>
+      <div class="ai-widget" id="aiWidgetPanel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:8px;color:var(--pur);font-family:var(--font);letter-spacing:1px;text-transform:uppercase;">Fase</span>
+          <span style="font-size:9px;font-weight:700;font-family:var(--font);" id="aiPhaseVal">Offline</span>
+        </div>
+        <div class="ai-prog-track"><div class="ai-prog-fill" id="aiProgFill" style="width:0%;"></div></div>
+        <div class="ai-metric"><span class="ai-metric-l">Estratégia</span><span class="ai-metric-v" id="aiStrategy" style="color:var(--ora);">—</span></div>
+        <div class="ai-metric"><span class="ai-metric-l">Memórias</span><span class="ai-metric-v" id="aiMemCount" style="color:var(--pur);">0</span></div>
+        <div class="ai-metric"><span class="ai-metric-l">Confiança</span><span class="ai-metric-v" id="aiConfScore" style="color:var(--ylw);">—</span></div>
+        <div class="ai-metric"><span class="ai-metric-l">Padrões MM</span><span class="ai-metric-v" id="aiPatterns" style="color:var(--blu);">0</span></div>
+        <div class="ai-metric"><span class="ai-metric-l">Shadow Ops</span><span class="ai-metric-v" id="aiShadowOps" style="color:var(--ora);">0</span></div>
+        <div class="ai-actions" id="aiModesActions">
+          <button class="ai-action-btn" id="btnObserve" onclick="setAIMode('observe')">Observar</button>
+          <button class="ai-action-btn" id="btnShadow" onclick="setAIMode('shadow')">Shadow</button>
+          <button class="ai-action-btn" id="btnAuto" onclick="setAIMode('auto')">Auto</button>
+        </div>
+      </div>
+    </section>
+    
+    <section class="sb-sec" id="secMidnightMadness">
+      <div class="sb-ttl">🌙 Midnight Madness Pro</div>
+      <div class="mm-widget" id="mmWidgetPanel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span class="mm-session-badge" id="mmSessionBadge">Aguardando Sessão</span>
+          <span style="font-size:8px;color:var(--mut);font-family:var(--font);">H1 · EST</span>
+        </div>
+        <div class="mm-zone" id="mmZonesList">
+          <div class="mm-zone-row"><span class="mm-zone-lbl">Resistência — Topo 1</span><span class="mm-zone-val" id="mmTop1" style="color:var(--dn);">—</span></div>
+          <div class="mm-zone-row"><span class="mm-zone-lbl">Suporte — Fundo 1</span><span class="mm-zone-val" id="mmBot1" style="color:var(--up);">—</span></div>
+          <div style="border-top:1px solid var(--bdr);margin-top:4px;padding-top:4px;">
+            <div class="mm-zone-row"><span class="mm-zone-lbl">RR Ratio</span><span class="mm-zone-val" style="color:var(--ylw);">1:3</span></div>
+            <div class="mm-zone-row"><span class="mm-zone-lbl">Offset SL</span><span class="mm-zone-val" style="color:var(--mut);">5 ticks</span></div>
+            <div class="mm-zone-row"><span class="mm-zone-lbl">Pivot Length</span><span class="mm-zone-val" style="color:var(--mut);">5L · 5R</span></div>
+            <div class="mm-zone-row"><span class="mm-zone-lbl">Exaustão</span><span class="mm-zone-val" style="color:var(--mut);">3 velas</span></div>
+          </div>
+        </div>
+        <div class="mm-signal-box" id="mmSignalBox">
+          <div class="mm-sig-lbl" id="mmSigLbl">—</div>
+          <div class="mm-sig-entry" id="mmSigEntry">—</div>
+          <div class="mm-sig-sub" id="mmSigSub">—</div>
+          <button class="mm-exec-btn" id="mmExecBtn" onclick="execMMSignal()">Executar Ordem MM</button>
+        </div>
+        <div class="mm-prompt-loaded" id="mmPromptLoaded">✓ SISTEMA MIDNIGHT CARREGADO<br>Hermes monitorando zonas H1</div>
+      </div>
+    </section>
+    
+    <section class="sb-sec" id="secPairsMonitored">
+      <div class="sb-ttl">Pares Monitorados</div>
+      <div id="pairsWrap" class="pairs-wrap-container"></div>
+    </section>
+    
+    <section class="sb-sec" style="flex:1 1 auto;" id="secSystemLogs">
+      <div class="sb-ttl">Log do Sistema</div>
+      <div class="log-box" id="logBox"></div>
+    </section>
+  </aside>
+
+  <!-- CENTER CORE CONTENT -->
+  <section class="content" id="centerWorkspacePanel">
+    <div class="metrics" id="metricsDisplayBar">
+      <div class="met"><div class="met-lbl">Operações</div><div class="met-val" id="mOps">0</div><div class="met-sub">hoje</div></div>
+      <div class="met"><div class="met-lbl">Lucro no Dia</div><div class="met-val" id="mPnl" style="color:var(--mut);">—</div><div class="met-sub" id="mWL">—</div></div>
+      <div class="met"><div class="met-lbl">Win Rate</div><div class="met-val" id="mWin">—</div><div class="met-sub">eficiência</div></div>
+      <div class="met"><div class="met-lbl">Pos. Abertas</div><div class="met-val" id="mPos">0</div><div class="met-sub">monitorados</div></div>
+    </div>
+    
+    <div class="chart-main" id="chartMainScrollArea">
+      <!-- OHLCV CANDLE CHART -->
+      <section class="chart-box" style="flex:0 0 auto;" id="chartCandleSection">
+        <header class="ch-head" id="chartCandleHeader">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <span class="ch-ttl" id="chartTitle">BTCUSDT · H1 · Midnight Madness</span>
+            <div class="ch-tabs" id="timeframesTabs">
+              <button class="tf-tab" onclick="setTf('1m',this)">1m</button>
+              <button class="tf-tab" onclick="setTf('5m',this)">5m</button>
+              <button class="tf-tab" onclick="setTf('15m',this)">15m</button>
+              <button class="tf-tab act" onclick="setTf('1h',this)">1h</button>
+              <button class="tf-tab" onclick="setTf('4h',this)">4h</button>
+            </div>
+          </div>
+          <div class="ch-tabs" id="assetTabs">
+            <button class="ch-tab act" onclick="selPair('BTCUSDT',this)">BTC</button>
+            <button class="ch-tab" onclick="selPair('ETHUSDT',this)">ETH</button>
+            <button class="ch-tab" onclick="selPair('SOLUSDT',this)">SOL</button>
+            <button class="ch-tab" onclick="selPair('XRPUSDT',this)">XRP</button>
+          </div>
+        </header>
+        <div class="candle-info" id="chartCandleInfo">
+          <span>O: <b id="ci-o">—</b></span>
+          <span>H: <b id="ci-h" style="color:var(--up);">—</b></span>
+          <span>L: <b id="ci-l" style="color:var(--dn);">—</b></span>
+          <span>C: <b id="ci-c">—</b></span>
+          <span id="ci-pct" style="font-weight:600;">—</span>
+          <span style="margin-left:auto;color:var(--ylw);">Vol: <b id="ci-vol">—</b></span>
+          <span id="mmChartStatus" style="color:var(--ora);font-size:8px;margin-left:8px;font-family:var(--font);"></span>
+        </div>
+        <canvas id="candleChart" style="display:block;width:100%;height:200px;cursor:crosshair;"></canvas>
+        <div id="xLabels" style="display:flex;justify-content:space-between;margin-top:4px;"></div>
+      </section>
+      
+      <!-- AI STRATEGY ADVISOR -->
+      <section class="ai-panel" id="aiStrategyAdvisorPanel">
+        <header class="ch-head" id="aiAdvisorHeader">
+          <span class="ch-ttl" style="color:var(--pur);">🧠 Hermes — Análise · Midnight Madness Pro</span>
+          <div style="display:flex;gap:5px;align-items:center;">
+            <span class="status-pill pill-off" id="aiStatusPill">OFFLINE</span>
+            <span class="status-pill pill-mm" id="mmStatusPill" style="display:none;">🌙 MM</span>
+          </div>
+        </header>
+        <div id="aiSignalWrap" style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span class="signal-chip sig-neutral">Aguardando ativação...</span>
+        </div>
+        <div class="ai-reason" id="aiReason">Configure API Key + Prompt Midnight Madness via ⚙ para ativar o Hermes.</div>
+        <div class="conf-bar-wrap" id="aiConfidenceProgress">
+          <div class="conf-lbl">Confiança: <span id="confPct">0%</span></div>
+          <div class="conf-bar"><div class="conf-fill" id="confFill" style="width:0%;background:var(--pur);"></div></div>
+        </div>
+      </section>
+      
+      <!-- PNL & OPERATIONS TABLES -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="gridPnlAndOps">
+        <section class="chart-box" id="pnlAccumulatedSection">
+          <div class="ch-head"><span class="ch-ttl">P&L Acumulado</span></div>
+          <canvas id="pnlChart" style="display:block;width:100%;height:110px;"></canvas>
+        </section>
+        
+        <section class="chart-box" style="display:flex;flex-direction:column;" id="recentOperationsSection">
+          <header class="ch-head" id="recentOpsHeader">
+            <span class="ch-ttl">Operações</span>
+            <span style="font-size:8px;font-family:var(--font);">
+              <span style="color:var(--ora);">🌙</span>=MM&nbsp;
+              <span style="color:var(--pur);">🧠</span>=IA
+            </span>
+          </header>
+          <div style="overflow-y:auto;max-height:115px;" id="opsTableContainer">
+            <table class="ops-table" id="opsTable">
+              <thead><tr><th>Par</th><th>Lado</th><th>Entry</th><th>SL</th><th>TP</th><th>Fonte</th><th>Hora</th></tr></thead>
+              <tbody id="opsBody"><tr><td colspan="7" style="text-align:center;color:var(--mut);padding:14px;font-size:9px;">Nenhuma operação</td></tr></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+      
+      <!-- HERMES MEMORY LIST -->
+      <section class="chart-box" id="hermesMemorySection">
+        <header class="ch-head" id="hermesMemoryHeader">
+          <span class="ch-ttl">🧠 Memória Hermes — Midnight Madness</span>
+          <div style="display:flex;gap:3px;">
+            <button class="ch-tab" id="btnMemoryClear" onclick="clearMemory()" style="color:var(--dn);font-size:8px;">Limpar</button>
+            <button class="ch-tab act" id="btnMemoryExport" onclick="exportMemory()" style="font-size:8px;">Exportar JSON</button>
+          </div>
+        </header>
+        <div class="memory-list" id="memoryList">
+          <div style="text-align:center;color:var(--mut);padding:14px;font-size:9px;font-family:var(--font);">Ative o Hermes e o Modo Midnight Madness para começar o aprendizado.</div>
+        </div>
+      </section>
+      
+      <!-- BOT CONFIG PAIRS TABLE -->
+      <section class="chart-box" id="botConfigPairsSection">
+        <header class="ch-head" id="botConfigPairsHeader">
+          <span class="ch-ttl">Config Bot — Pares</span>
+          <button class="ch-tab act" id="btnApplyConfig" onclick="applyConfig()" style="font-size:8px;">Aplicar</button>
+        </header>
+        <table class="cfg-table" id="cfgTable">
+          <thead><tr><th>Par</th><th>Compra ($)</th><th>Venda ($)</th><th>Qtd</th><th>Status</th></tr></thead>
+          <tbody id="cfgBody"></tbody>
+        </table>
+      </section>
+    </div>
+  </section>
+
+  <!-- RIGHT ORDER PANEL -->
+  <aside class="order-panel" id="orderPanelRight">
+    <header class="op-topbar" id="orderTopbarControls">
+      <button class="seg act" onclick="setMgn('cross',this)">Cruzada</button>
+      <button class="seg" onclick="setMgn('iso',this)">Isolada</button>
+      <button class="lev-btn" onclick="togLev()" id="levBtn">20x</button>
+      <button class="dir-l act" id="dL" onclick="setDir('long')">Long</button>
+      <button class="dir-s" id="dS" onclick="setDir('short')">Short</button>
+      <button class="more-b" onclick="togAdv()">···</button>
+    </header>
+    
+    <section id="advBox" class="adv-box">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+        <label style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--mut);cursor:pointer;"><input type="checkbox" class="chk"> Hedge</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--mut);cursor:pointer;"><input type="checkbox" class="chk" id="confirmOrd" checked> Confirmar</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--mut);cursor:pointer;"><input type="checkbox" class="chk"> Trailing</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--mut);cursor:pointer;"><input type="checkbox" class="chk" checked> Anti-slip</label>
+      </div>
+    </section>
+    
+    <section id="levBox" class="lev-box">
+      <div style="font-size:9px;color:var(--mut);margin-bottom:5px;">Alavancagem — <span style="color:var(--ylw);font-family:var(--font);font-weight:700;" id="levVal">20x</span></div>
+      <input type="range" class="rng" min="1" max="125" value="20" id="levSlider" oninput="updLev(this.value)" style="width:100%;">
+      <div class="pct-m">
+        <span class="pm">1x</span><span class="pm" onclick="snapLev(10)">10x</span>
+        <span class="pm" onclick="snapLev(20)">20x</span><span class="pm" onclick="snapLev(50)">50x</span><span class="pm">125x</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:5px;">
+        <span style="font-size:8px;color:var(--mut);">Margem: <span style="color:var(--txt);font-family:var(--font);" id="levMgn">—</span></span>
+        <span style="font-size:8px;color:var(--mut);">Liq.: <span style="color:var(--dn);font-family:var(--font);" id="levLiq">—</span></span>
+      </div>
+    </section>
+    
+    <div class="op-tabs" id="orderMethodTabs">
+      <div class="op-tab act" onclick="setTab('limit',this)">Limite</div>
+      <div class="op-tab" onclick="setTab('market',this)">Mercado</div>
+      <div class="op-tab" onclick="setTab('cond',this)">Condicional</div>
+    </div>
+    
+    <div class="op-body" id="orderFieldsBody">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
+        <div>
+          <div class="fl">Disponível</div>
+          <div style="font-size:11px;font-family:var(--font);font-weight:600;" id="availDisp">Conecte API ⚙</div>
+        </div>
+        <button onclick="togTransfer()" style="background:var(--bg3);border:1px solid var(--bdr);border-radius:4px;color:var(--blu);cursor:pointer;padding:4px 8px;font-size:13px;" title="Transferir">⇄</button>
+      </div>
+      
+      <div class="ai-suggest-box" id="aiSuggestBox">
+        <div class="ai-suggest-head">
+          <span class="ai-suggest-lbl">🧠 Hermes · MM Sugere</span>
+          <span class="ai-conf-badge" id="aiSuggestConf">0%</span>
+        </div>
+        <div class="ai-suggest-action" id="aiSuggestAction">—</div>
+        <div class="ai-suggest-reason" id="aiSuggestReason">—</div>
+        <button class="ai-exec-btn" onclick="execAISuggestion()">⚡ Executar Sugestão</button>
+      </div>
+      
+      <div id="trBox" class="tr-box">
+        <div style="font-size:10px;font-weight:600;margin-bottom:6px;">Transferir Saldo</div>
+        <div class="inp-row" style="align-items:center;margin-bottom:5px;">
+          <select class="sel" style="flex:1;" id="frW"><option>Futuros</option><option>Spot</option></select>
+          <span style="color:var(--blu);font-size:14px;cursor:pointer;padding:0 5px;" onclick="swpTr()">⇄</span>
+          <select class="sel" style="flex:1;" id="toW"><option>Spot</option><option>Futuros</option></select>
+        </div>
+        <div class="inp-row">
+          <input class="inp" type="number" id="trAmt" placeholder="Valor USDT">
+          <button onclick="doTr()" style="background:var(--blu);color:#fff;border:none;border-radius:4px;padding:5px 11px;cursor:pointer;font-size:10px;font-weight:600;white-space:nowrap;">OK</button>
+        </div>
+      </div>
+      
+      <div id="condBox" class="cond-box">
+        <div class="fl">Preço Stop (gatilho)</div>
+        <div class="inp-row">
+          <input class="inp" type="number" id="stopPx" placeholder="0.00">
+          <select class="sel"><option>Última</option><option>Mark Price</option><option>Index Price</option></select>
+        </div>
+        <div class="fl">Tipo</div>
+        <select class="sel" style="width:100%;margin-bottom:0;"><option>Stop Market</option><option>Stop Limit</option><option>Take Profit</option><option>Trailing Stop</option></select>
+      </div>
+      
+      <div id="pxBlock">
+        <div class="fl">Preço</div>
+        <div class="inp-row">
+          <input class="inp" type="number" id="pxInp" value="0" oninput="calc()">
+          <select class="sel" id="pxTyp" onchange="onPxTyp(this.value)"><option>Limite</option><option>Mercado</option></select>
+        </div>
+      </div>
+      
+      <div class="fl">Quantidade</div>
+      <div class="inp-row">
+        <input class="inp" type="number" id="qtyInp" value="0" oninput="calc()" placeholder="0.000">
+        <select class="sel"><option>USDT</option><option>USDC</option><option>BTC</option></select>
+      </div>
+      
+      <div style="margin:2px 0 6px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
+          <span class="fl" style="margin:0;">Tamanho</span>
+          <span style="font-size:9px;font-family:var(--font);font-weight:600;" id="slPctLbl">0%</span>
+        </div>
+        <input type="range" class="rng" min="0" max="100" value="0" id="sizeSlider" oninput="onSl(this.value)" style="width:100%;">
+        <div class="pct-m">
+          <span class="pm" onclick="onSl(25)">25%</span><span class="pm" onclick="onSl(50)">50%</span>
+          <span class="pm" onclick="onSl(75)">75%</span><span class="pm" onclick="onSl(100)">100%</span>
+        </div>
+      </div>
+      
+      <div class="calc-row">
+        <div class="cbox"><div class="cbox-l">Margem</div><div class="cbox-v" id="mgnDisp">—</div></div>
+        <div class="cbox"><div class="cbox-l">Liquidação</div><div class="cbox-v neg" id="liqDisp">—</div></div>
+        <div class="cbox"><div class="cbox-l">Nocional</div><div class="cbox-v" id="nocDisp">—</div></div>
+      </div>
+      
+      <button class="btn-buy" id="btnExecBuy" onclick="execOrd('BUY')">▲ Comprar / Long<span class="bsub" id="buyAmt">0.000 BTC</span></button>
+      <button class="btn-sell" id="btnExecSell" onclick="execOrd('SELL')">▼ Vender / Short<span class="bsub" id="sellAmt">0.000 BTC</span></button>
+      
+      <div style="display:flex;align-items:center;gap:4px;margin:6px 0 3px;">
+        <input type="checkbox" class="chk" id="tpslChk" onchange="togTpsl(this.checked)">
+        <label class="chk-l" for="tpslChk">TP / SL</label>
+      </div>
+      
+      <div class="tpsl-box" id="tpslBox">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:5px;">
+          <div><div class="fl" style="color:var(--up);">Take Profit</div><input class="inp" type="number" id="tpInp" placeholder="TP" oninput="calcTpsl()"></div>
+          <div><div class="fl" style="color:var(--dn);">Stop Loss</div><input class="inp" type="number" id="slInp" placeholder="SL" oninput="calcTpsl()"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;">
+          <div class="cbox"><div class="cbox-l">TP P&L</div><div class="cbox-v pos" id="tpPnl">—</div></div>
+          <div class="cbox"><div class="cbox-l">SL P&L</div><div class="cbox-v neg" id="slPnl">—</div></div>
+          <div class="cbox"><div class="cbox-l">R/R</div><div class="cbox-v" id="rrR">—</div></div>
+        </div>
+      </div>
+      
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:5px;padding-top:6px;border-top:1px solid var(--bdr);">
+        <label style="display:flex;align-items:center;gap:3px;cursor:pointer;">
+          <input type="checkbox" class="chk" id="roChk"><span class="chk-l">Apenas reduzir</span>
+        </label>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span style="font-size:8px;color:var(--mut);">TIF</span>
+          <select class="sel" id="tifSel"><option>GTC</option><option>IOC</option><option>FOK</option></select>
+        </div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<!-- SETTINGS MODAL OVERLAY -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal" id="settingsModalCard">
+    <header class="modal-header">
+      <div class="modal-title"><span style="font-size:18px;">⚙</span> Configurações — ATOMEX AI · Hermes Midnight Madness</div>
+      <button class="modal-close" id="btnCloseSettingsModal" onclick="closeSettings()">✕</button>
+    </header>
+    <div class="modal-body" id="settingsModalBody">
+      <!-- Section 1: API Keys -->
+      <section class="ms" id="settingsSectionApi">
+        <div class="ms-ttl">🔑 API Exchange</div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label class="form-label" for="cfg-exchange">Exchange</label>
+          <select class="form-sel" id="cfg-exchange" onchange="onExchangeChange(this.value)">
+            <option value="binance">Binance Futures</option>
+            <option value="hyperliquid">Hyperliquid (DEX)</option>
+            <option value="bybit">Bybit</option>
+            <option value="gmx">GMX (DEX)</option>
+            <option value="dydx">dYdX</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="cfg-apikey">API Key</label>
+            <input class="form-inp" type="password" id="cfg-apikey" placeholder="Cole sua API Key aqui...">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cfg-secret">Secret Key</label>
+            <input class="form-inp" type="password" id="cfg-secret" placeholder="Cole sua Secret Key...">
+          </div>
+        </div>
+        <div id="walletRow" style="display:none;" class="form-group">
+          <label class="form-label" for="cfg-wallet">Wallet Address (DEX/Web3)</label>
+          <input class="form-inp" type="text" id="cfg-wallet" placeholder="0x...">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:9px;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <button class="test-btn" id="btnTestApiConnection" onclick="testConnection()">🔗 Testar Conexão</button>
+            <span class="status-pill pill-off" id="connStatusPill">Não testado</span>
+          </div>
+          <label style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--mut);cursor:pointer;">
+            <input type="checkbox" class="chk" id="cfg-testnet"> Testnet
+          </label>
+        </div>
+      </section>
+      
+      <!-- Section 2: AI Config -->
+      <section class="ms" id="settingsSectionAi">
+        <div class="ms-ttl">🧠 Hermes — Configuração da IA</div>
+        <div style="background:rgba(22,119,255,.08);border:1px solid rgba(22,119,255,.25);border-radius:6px;padding:10px;margin-bottom:10px;font-size:9px;color:var(--txt);font-family:var(--font);line-height:1.7;">
+          <b style="color:var(--blu);">Como obter a API Key gratuita:</b><br>
+          ➤ Acesse <b>openrouter.ai</b> → crie conta → Keys → Create Key<br>
+          ➤ Todos os modelos marcados com <b style="color:var(--up);">(free)</b> são gratuitos no OpenRouter<br>
+          ➤ Uma só chave dá acesso a Gemini, Qwen, DeepSeek, Llama, Hermes e muito mais
+        </div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label class="form-label" for="cfg-aikey">OpenRouter API Key</label>
+          <input class="form-inp" type="password" id="cfg-aikey" placeholder="sk-or-v1-...">
+        </div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label class="form-label" for="cfg-aimodel">Modelo de Linguagem (LLM)</label>
+          <select class="form-sel" id="cfg-aimodel">
+            <option value="google/gemini-2.0-flash-thinking-exp:free">Gemini 2.0 Flash Thinking (free) — Recomendado</option>
+            <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash Exp (free)</option>
+            <option value="deepseek/deepseek-chat:free">DeepSeek V3 (free)</option>
+            <option value="meta-llama/llama-3-8b-instruct:free">Llama 3 8B Instruct (free)</option>
+            <option value="qwen/qwen-2.5-72b-instruct:free">Qwen 2.5 72B (free)</option>
+            <option value="nousresearch/hermes-3-llama-3.1-405b:extended">Hermes 3 Llama 3.1 405B</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+            <label class="form-label" for="cfg-systemprompt">Prompt de Sistema (Instruções Hermes)</label>
+            <button class="test-btn" id="btnLoadMidnightPrompt" onclick="loadMidnightPrompt()" style="color:var(--ora);border-color:rgba(255,140,0,.4);">🌙 Carregar Prompt Padrão MM</button>
+            <button class="test-btn" id="btnClearPrompt" onclick="document.getElementById('cfg-systemprompt').value=''">Limpar</button>
+            <span class="status-pill pill-off" id="promptStatusPill" style="margin-left:auto;">Sem prompt</span>
+          </div>
+          <textarea class="form-textarea" id="cfg-systemprompt" placeholder="Digite as diretrizes operacionais do Hermes..."></textarea>
+        </div>
+      </section>
+
+      <!-- Section 3: MM Setup Parameters -->
+      <section class="ms" id="settingsSectionMidnight">
+        <div class="ms-ttl">🌙 Parâmetros Midnight Madness</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="cfg-mmstart">Início Sessão Overnight (EST)</label>
+            <input class="form-inp" type="time" id="cfg-mmstart" value="16:00">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cfg-mmend">Fim Sessão Overnight (EST)</label>
+            <input class="form-inp" type="time" id="cfg-mmend" value="09:30">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="cfg-pivotlen">Pivot Length (velas)</label>
+            <input class="form-inp" type="number" id="cfg-pivotlen" value="5" min="2" max="20">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cfg-offset">Offset SL (ticks/pontos)</label>
+            <input class="form-inp" type="number" id="cfg-offset" value="5" min="1" max="50">
+          </div>
+        </div>
+        <div class="toggle-row"><div><div class="toggle-lbl">Exigir 3 velas de exaustão</div><div class="toggle-sub">Pitchfork: confirmação obrigatória antes de entrar</div></div><label class="toggle"><input type="checkbox" id="cfg-exhaust3" checked><span class="toggle-slider"></span></label></div>
+        <div class="toggle-row"><div><div class="toggle-lbl">Cancelar ordem se SL tocado antes</div><div class="toggle-sub">Fail-safe: cancela Buy/Sell Stop se SL ativado antes da entrada</div></div><label class="toggle"><input type="checkbox" id="cfg-failsafe" checked><span class="toggle-slider"></span></label></div>
+        <div class="toggle-row"><div><div class="toggle-lbl">1 trade por ativo simultaneamente</div><div class="toggle-sub">Bloqueia nova entrada se posição já aberta no par</div></div><label class="toggle"><input type="checkbox" id="cfg-onetrade" checked><span class="toggle-slider"></span></label></div>
+      </section>
+
+      <!-- Section 4: Risk Motor -->
+      <section class="ms" id="settingsSectionRisk">
+        <div class="ms-ttl">🛡 Motor de Risco</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="cfg-maxrisk">Risco Máx por Operação (%)</label>
+            <input class="form-inp" type="number" id="cfg-maxrisk" value="2" min="0.1" max="100" step="0.1">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cfg-maxdailyloss">Perda Máx Diária (%)</label>
+            <input class="form-inp" type="number" id="cfg-maxdailyloss" value="5" min="0.1" max="100" step="0.1">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="cfg-maxlev">Alavancagem Máxima</label>
+            <input class="form-inp" type="number" id="cfg-maxlev" value="20" min="1" max="125">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cfg-aicapital">Capital IA Auto (%)</label>
+            <input class="form-inp" type="number" id="cfg-aicapital" value="5" min="1" max="100">
+          </div>
+        </div>
+        <div class="toggle-row"><div><div class="toggle-lbl">Circuit Breaker</div><div class="toggle-sub">Para o bot ao atingir perda diária máxima</div></div><label class="toggle"><input type="checkbox" id="cfg-circuit" checked><span class="toggle-slider"></span></label></div>
+      </section>
+
+      <!-- Section 5: Vector Logger -->
+      <section class="ms" id="settingsSectionLogger">
+        <div class="ms-ttl">📡 Logger & Aprendizado IA</div>
+        <div class="toggle-row"><div><div class="toggle-lbl">Candles OHLCV H1</div><div class="toggle-sub">Grava velas de 1 hora para análise Midnight Madness</div></div><label class="toggle"><input type="checkbox" id="cfg-logcandles" checked><span class="toggle-slider"></span></label></div>
+        <div class="toggle-row"><div><div class="toggle-lbl">Orderbook & Delta</div><div class="toggle-sub">Profundidade + fluxo → memória vetorial do Hermes</div></div><label class="toggle"><input type="checkbox" id="cfg-logob" checked><span class="toggle-slider"></span></label></div>
+        <div class="toggle-row"><div><div class="toggle-lbl">Zonas de Liquidez Identificadas</div><div class="toggle-sub">Topos/Fundos detectados gravados como memória</div></div><label class="toggle"><input type="checkbox" id="cfg-logzones" checked><span class="toggle-slider"></span></label></div>
+        <div class="toggle-row"><div><div class="toggle-lbl">Classificação Automática WIN/LOSS</div><div class="toggle-sub">IA refina aprendizado baseado em resultado real</div></div><label class="toggle"><input type="checkbox" id="cfg-autoclassify" checked><span class="toggle-slider"></span></label></div>
+      </section>
+
+      <!-- Section 6: Autonomy Toggles -->
+      <section class="ms" id="settingsSectionAutonomy">
+        <div class="ms-ttl">⚡ Autonomia da IA</div>
+        <div class="toggle-row"><div><div class="toggle-lbl">Modo Observação</div><div class="toggle-sub">Hermes aprende e sinaliza, não executa</div></div><label class="toggle"><input type="checkbox" id="cfg-observe" checked><span class="toggle-slider"></span></label></div>
+        <div class="toggle-row"><div><div class="toggle-lbl">Shadow Mode</div><div class="toggle-sub">Simula operações MM sem capital real</div></div><label class="toggle"><input type="checkbox" id="cfg-shadow"><span class="toggle-slider"></span></label></div>
+        <div class="toggle-row"><div><div class="toggle-lbl">Autonomia Parcial (1–5%)</div><div class="toggle-sub">Opera com capital mínimo quando confiança >85%</div></div><label class="toggle"><input type="checkbox" id="cfg-partial"><span class="toggle-slider"></span></label></div>
+        <div class="toggle-row"><div><div class="toggle-lbl" style="color:var(--dn);">Autonomia Total 🛡</div><div class="toggle-sub">Requer confiança >92% + aprovação manual</div></div><label class="toggle"><input type="checkbox" id="cfg-full" disabled><span class="toggle-slider"></span></label></div>
+      </section>
+
+      <!-- Section 7: Progress Trophies -->
+      <section class="ms" id="settingsSectionPhases">
+        <div class="ms-ttl">🧠 Fases de Aprendizado — Hermes</div>
+        <div class="phase-grid" id="phaseGrid">
+          <div class="phase-card done" id="phase1card"><div class="phase-num" style="color:var(--up);">1</div><div class="phase-name">Executor</div><div class="phase-status" style="color:var(--up);">✓ Completo</div></div>
+          <div class="phase-card done" id="phase2card"><div class="phase-num" style="color:var(--up);">2</div><div class="phase-name">Captura</div><div class="phase-status" style="color:var(--up);">✓ Completo</div></div>
+          <div class="phase-card active" id="phase3card"><div class="phase-num" style="color:var(--pur);">3</div><div class="phase-name">Memória</div><div class="phase-status" style="color:var(--pur);">● Ativo</div></div>
+          <div class="phase-card" id="phase4card"><div class="phase-num" style="color:var(--mut);">4</div><div class="phase-name">Replay</div><div class="phase-status" style="color:var(--mut);">○ Pendente</div></div>
+          <div class="phase-card" id="phase5card"><div class="phase-num" style="color:var(--mut);">5</div><div class="phase-name">Shadow</div><div class="phase-status" style="color:var(--mut);">○ Pendente</div></div>
+          <div class="phase-card" id="phase6card"><div class="phase-num" style="color:var(--mut);">6</div><div class="phase-name">Autonomia</div><div class="phase-status" style="color:var(--mut);">○ Bloqueado</div></div>
+        </div>
+      </section>
+    </div>
+    <footer class="modal-footer">
+      <button class="btn-cancel" id="btnCancelSettings" onclick="closeSettings()">Cancelar</button>
+      <button class="btn-save" id="btnSaveSettings" onclick="saveSettings()">💾 Salvar & Ativar</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Sequential Script Loading -->
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/candles.js"></script>
+<script src="js/midnight.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/order.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,100 @@
+/* ══════════════════════════════════════
+   ATOMEX AI — Layout Structure (layout.css)
+   ══════════════════════════════════════ */
+
+/* TOPBAR */
+.topbar{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:0 14px;
+  height:44px;
+  background:var(--bg2);
+  border-bottom:1px solid var(--bdr);
+  z-index:100;
+}
+
+.logo{
+  font-family:var(--font);
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:3px;
+  color:var(--blu);
+}
+.logo em{color:var(--up);font-style:normal;}
+.logo sup{font-size:8px;color:var(--pur);vertical-align:super;margin-left:2px;}
+.div{width:1px;height:20px;background:var(--bdr2);margin:0 3px;}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+
+/* LAYOUT GRID */
+.layout{
+  display:grid;
+  grid-template-columns:208px 1fr 230px;
+  height:calc(100vh - 44px);
+  overflow:hidden;
+}
+
+/* SIDEBAR CONTAINER */
+.sidebar{
+  background:var(--bg2);
+  border-right:1px solid var(--bdr);
+  display:flex;
+  flex-direction:column;
+  overflow-y:auto;
+}
+.sb-sec{
+  padding:9px 11px;
+  border-bottom:1px solid var(--bdr);
+}
+
+/* CENTER WORKSPACE */
+.content{
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  background:var(--bg);
+}
+.metrics{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+  padding:7px 10px;
+  background:var(--bg2);
+  border-bottom:1px solid var(--bdr);
+  flex:0 0 auto;
+}
+.chart-main{
+  flex:1;
+  padding:8px 10px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  overflow-y:auto;
+}
+
+/* ORDER PANEL SIDEBAR */
+.order-panel{
+  background:var(--bg2);
+  border-left:1px solid var(--bdr);
+  display:flex;
+  flex-direction:column;
+  overflow-y:auto;
+}
+.op-topbar{
+  display:flex;
+  align-items:center;
+  gap:2px;
+  padding:6px 7px;
+  border-bottom:1px solid var(--bdr);
+  background:var(--bg3);
+  flex-wrap:wrap;
+  flex:0 0 auto;
+}
+.op-tabs{
+  display:flex;
+  border-bottom:1px solid var(--bdr);
+  flex:0 0 auto;
+}
+.op-body{
+  padding:9px;
+}

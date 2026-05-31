@@ -1,0 +1,66 @@
+/* ══════════════════════════════════════
+   ATOMEX AI — Base Styles & variables (base.css)
+   ══════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  -webkit-font-smoothing:antialiased;
+}
+
+:root{
+  --bg:#080b10;
+  --bg2:#0e1218;
+  --bg3:#141921;
+  --bg4:#1a2030;
+  --bg5:#202840;
+  --bdr:rgba(255,255,255,0.07);
+  --bdr2:rgba(255,255,255,0.14);
+  --txt:#dde4f0;
+  --mut:#5e6e8a;
+  --mut2:#2d3850;
+  --up:#0ecb81;
+  --dn:#f6465d;
+  --blu:#1677ff;
+  --ylw:#f0b90b;
+  --pur:#7c5fe0;
+  --ora:#ff8c00;
+  --font:'JetBrains Mono',monospace;
+  --sans:'Inter',sans-serif;
+}
+
+html,body{
+  height:100%;
+  overflow:hidden;
+  background:var(--bg);
+  color:var(--txt);
+  font-family:var(--sans);
+}
+
+::-webkit-scrollbar{
+  width:4px;
+  height:4px;
+}
+::-webkit-scrollbar-track{
+  background:transparent;
+}
+::-webkit-scrollbar-thumb{
+  background:var(--bg4);
+  border-radius:4px;
+}
+
+@keyframes pulse{
+  0%,100%{opacity:1;}
+  50%{opacity:.35;}
+}
+
+@keyframes tin{
+  from{opacity:0;transform:translateY(6px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+.pos{color:var(--up);}
+.neg{color:var(--dn);}
