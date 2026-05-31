@@ -104,3 +104,35 @@
 .op-body{
   padding:9px;
 }
+
+/* ══════════════════════════════════════
+   ATOMEX AI — Viewport & Column Dimensions
+   ══════════════════════════════════════ */
+#mainDashboardLayout {
+  display: flex;
+  height: calc(100vh - 44px); /* Ajustado de 100vh para descontar o cabeçalho (44px) e evitar rolagem da página */
+  width: 100vw;
+  overflow: hidden;
+}
+
+#sidebarLeftPanel {
+  width: 280px;
+  min-width: 280px;
+  flex-shrink: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+#centerWorkspacePanel {
+  flex: 1;
+  height: 100%;
+  overflow-y: auto;
+}
+
+#orderPanelRight {
+  width: 320px;
+  min-width: 320px;
+  flex-shrink: 0;
+  height: 100%;
+  overflow-y: auto;
+}
